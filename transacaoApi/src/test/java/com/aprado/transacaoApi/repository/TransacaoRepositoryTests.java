@@ -29,13 +29,17 @@ public class TransacaoRepositoryTests {
     class WhenRepositoryHasTransacoes {
         
         private TransacaoModel oldTransacao;
+        private TransacaoModel onTheLimitTransacao;
         private TransacaoModel recentTransacao;
+        private final OffsetDateTime instante = OffsetDateTime.parse("2020-08-07T12:30:00.789-03:00");
         
         @BeforeEach 
         void setUpTransacoes() {
-            oldTransacao = new TransacaoModel(123.45, OffsetDateTime.now().minusSeconds(70));
-            recentTransacao = new TransacaoModel(42.42, OffsetDateTime.now().minusSeconds(40));
+            oldTransacao = new TransacaoModel(123.45, instante.minusSeconds(61));
+            onTheLimitTransacao = new TransacaoModel(12.23, instante.minusSeconds(60));
+            recentTransacao = new TransacaoModel(42.42, instante.minusSeconds(59));
             transacaoRepository.addTransacao(oldTransacao);
+            transacaoRepository.addTransacao(onTheLimitTransacao);
             transacaoRepository.addTransacao(recentTransacao);
         }
 
@@ -48,8 +52,8 @@ public class TransacaoRepositoryTests {
         }
 
         @Test 
-        public void shouldReturnOnlyTransacoesAfterTheLimit() {
-            List<TransacaoModel> result = transacaoRepository.findByDataHoraAfter(OffsetDateTime.now().minusMinutes(1L));
+        public void shouldExcludeTransacaoExactlyAtTheLimit() {
+            List<TransacaoModel> result = transacaoRepository.findByDataHoraAfter(instante.minusSeconds(60));
     
             assertThat(result).containsExactly(recentTransacao);
         }
